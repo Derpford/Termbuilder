@@ -100,7 +100,15 @@ function love.keypressed(key,scan,rep)
 	  mapScreen:line(linex,liney,selectx,selecty,fgcol,bgcol,brush)
 	  linex,liney = -1,-1
 	end
-      else	
+      elseif love.keyboard.isDown("lctrl") or love.keyboard.isDown("rctrl") then
+	if rectx == -1 and recty == -1 then
+	  rectx, recty = selectx,selecty
+	elseif rectx ~= -1 and recty ~= -1 then
+	  mapScreen:rectangle('fill',rectx,recty,(selectx-rectx),(selecty-recty),{fill=brush})
+	  rectx,recty = -1,-1
+	end
+	
+      else
 	mapScreen:setValue(brush,selectx,selecty)
       end
     end
@@ -124,6 +132,10 @@ function love.draw()
     love.graphics.setColor(palette.green)
     love.graphics.rectangle('line',linex*8,liney*8,8,8)
     love.graphics.line((linex*8)+4,(liney*8)+4,(selectx*8)+4,(selecty*8)+4)
+  end
+  if rectx ~= -1 and recty ~= -1 then -- The rectangle cursor.
+    love.graphics.setColor(palette.sky)
+    love.graphics.rectangle('line',rectx*8,recty*8,(selectx-rectx+1) * 8, (selecty-recty+1) * 8)
   end
   love.graphics.setColor(255,255,255)
   paletteScreen:draw(0,love.graphics.getHeight()-16)
