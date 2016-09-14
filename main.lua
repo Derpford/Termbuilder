@@ -6,6 +6,8 @@ palette = palettes.c64
 -- First, variables. Make some here.
 offsetx,offsety = 0,0 -- Offset of the view.
 selectx,selecty = 0,0 -- Cursor position
+linex,liney = -1,-1 -- drawing a line
+rectx,recty = -1, -1 -- drawing a box
 mode = 1 -- current mode
 modes = {"type","special"}
 mapScreen = nil -- the map we're looking at
@@ -53,8 +55,6 @@ function love.update(dt)
   end
 end
 
-function love.textinput(text)
-    end
 function love.keypressed(key,scan,rep)
   if key == 'escape' then -- quit
     love.event.quit()
@@ -79,20 +79,57 @@ function love.keypressed(key,scan,rep)
       end
     end 
     if key == "=" then
-      brush = brush + 1 
+      if love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift") then
+	brush = brush + 8 
+      else
+	brush = brush + 1
+      end
     end
-    if key == "-" then
-      brush = brush - 1
+    if key == "-" and brush >= 1 then
+      if love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift") then
+	brush = brush - 8
+      else
+	brush = brush - 1
+      end
     end
     if key == "return" then
-      mapScreen:setValue(brush,selectx,selecty)
+      if love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift") then
+	if linex == -1 and liney == -1 then
+	  linex, liney = selectx,selecty
+	elseif linex ~= -1 and liney ~= -1 then
+	  mapScreen:line(linex,liney,selectx,selecty,fgcol,bgcol,brush)
+	  linex,liney = -1,-1
+	end
+      else	
+	mapScreen:setValue(brush,selectx,selecty)
+      end
+    end
+    if key == "space" then
+      mapScreen:setValue(0,selectx,selecty)
     end
   end 
 end
 
+function love.mousepressed(x,y,btn,touch)
+  if btn == 1 then
+    selectx,selecty = math.floor(x/8),math.floor(y/8)
+  end
+end
+
 function love.draw()
-  mapScreen:draw(offsetx,offsety)  
+  mapScreen:draw(offsetx,offsety) -- The working file.
+  love.graphics.setColor(palette.cyan) -- The cursor.
   love.graphics.rectangle('line',selectx*8,selecty*8,8,8)
+  if linex ~= -1 and liney ~= -1 then -- The line cursor.
+    love.graphics.setColor(palette.green)
+    love.graphics.rectangle('line',linex*8,liney*8,8,8)
+    love.graphics.line((linex*8)+4,(liney*8)+4,(selectx*8)+4,(selecty*8)+4)
+  end
+  love.graphics.setColor(255,255,255)
   paletteScreen:draw(0,love.graphics.getHeight()-16)
+  love.graphics.setColor(palette.grey)
   love.graphics.rectangle('line',0,love.graphics.getHeight()-16,16,16)
+  love.graphics.setColor(palette.lightgrey)
+  love.graphics.rectangle('line',0,love.graphics.getHeight()-8,8,8)
+  love.graphics.setColor(255,255,255)
 end
